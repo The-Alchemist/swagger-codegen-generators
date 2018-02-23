@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +37,37 @@ public class JavaInheritanceTest {
         Assert.assertEquals(cm.parent, "Base");
         Assert.assertEquals(cm.imports, Sets.newHashSet("Base"));
     }
+
+
+    @SuppressWarnings("static-method")
+    @Test(description = "convert a composed model with parent and extra properties")
+    public void javaInheritanceWithPropertiesTest() {
+        final Schema parentModel = new Schema().name("Base");
+
+        final StringSchema enumSchema = new StringSchema();
+        enumSchema.setEnum(Arrays.asList("VALUE1", "VALUE2", "VALUE3"));
+
+        final Schema extraProperty = new Schema().type("object").addProperties("name", enumSchema);
+
+
+        final Schema schema = new ComposedSchema()
+                .addAllOfItem(new Schema().$ref("Base"))
+                .addAllOfItem(extraProperty)
+                .name("composed");
+
+        final Map<String, Schema> allSchemas = new HashMap<>();
+        allSchemas.put(parentModel.getName(), parentModel);
+        allSchemas.put(schema.getName(), schema);
+
+        final DefaultCodegenConfig codegen = new JavaClientCodegen();
+        final CodegenModel cm = codegen.fromModel("sample", schema, allSchemas);
+
+        Assert.assertEquals(cm.name, "sample");
+        Assert.assertEquals(cm.classname, "Sample");
+        Assert.assertEquals(cm.parent, "Base");
+        Assert.assertEquals(cm.imports, Sets.newHashSet("Base"));
+    }
+
 
     @SuppressWarnings("static-method")
     @Test(description = "convert a composed model with discriminator")
